@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>CATEKIDS · Avisos</title>
+<style>
+:root{--bg:#f5f5f3;--card:#fff;--text:#181818;--muted:#747474;--line:#e6e6e2;--accent:#f1c40f;--danger:#b42318}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.app{max-width:680px;margin:auto;min-height:100vh;padding-bottom:92px}
+header{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line);padding:14px 16px}
+.brand{font-size:18px;font-weight:800}.sub{font-size:12px;color:var(--muted);margin-top:2px}
+main{padding:14px}.top{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 12px}
+h1{font-size:22px;margin:0}.count{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:10px}
+.row{display:flex;gap:11px}.ico{font-size:25px;line-height:1}.grow{flex:1;min-width:0}
+.title{font-weight:800;font-size:16px}.meta{font-size:12px;color:var(--muted);margin-top:4px}.body{font-size:14px;line-height:1.45;margin-top:11px;white-space:pre-wrap}
+.badge{display:inline-block;margin-top:10px;padding:4px 8px;border-radius:999px;background:#f2f2ef;font-size:11px;font-weight:700}
+.actions{display:flex;gap:8px;margin-top:13px}.actions button{flex:1;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px;font-weight:650}.danger{color:var(--danger)}
+.fab{position:fixed;right:max(20px,calc((100vw - 680px)/2 + 20px));bottom:22px;width:58px;height:58px;border:0;border-radius:50%;background:var(--accent);font-size:30px;box-shadow:0 6px 18px #0002}
+.sheet{position:fixed;inset:0;background:#0005;z-index:20;display:none;align-items:flex-end}.sheet.open{display:flex}
+.panel{width:100%;max-width:680px;margin:auto;background:#fff;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.handle{width:42px;height:4px;background:#d6d6d2;border-radius:9px;margin:0 auto 15px}.panel h2{margin:0 0 14px;font-size:20px}
+label{display:block;font-size:12px;font-weight:750;margin:13px 0 5px}
+input,textarea,select{width:100%;border:1px solid #d7d7d2;border-radius:11px;padding:12px;font:inherit;background:#fff}textarea{min-height:112px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.icons{display:flex;gap:7px;overflow:auto}.icon{min-width:43px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px;font-size:20px}.icon.sel{border:2px solid #c9a600;background:#fffbea}
+.visible{display:flex;align-items:center;justify-content:space-between;margin-top:14px}.visible input{width:22px;height:22px}
+.save{width:100%;margin-top:17px;border:0;border-radius:12px;background:var(--accent);padding:14px;font-weight:850;font-size:15px}
+.cancel{width:100%;margin-top:7px;border:0;background:transparent;padding:10px;color:var(--muted)}
+.empty,.loading{text-align:center;color:var(--muted);padding:42px 10px}.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);background:#202020;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;display:none;z-index:40;max-width:88%}
+@media(min-width:700px){.panel{border-radius:22px;margin-bottom:24px}.sheet{align-items:center}.fab{bottom:28px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><div class="brand">CATEKIDS</div><div class="sub">Avisos · Misión Parroquial El Señor de la Misericordia</div></header>
+<main><div class="top"><h1>Avisos</h1><span class="count" id="count"></span></div><div id="list" class="loading">Cargando avisos…</div></main>
+<button class="fab" onclick="nuevo()" aria-label="Nuevo aviso">+</button>
+</div>
+
+<div class="sheet" id="sheet" onclick="fondoCerrar(event)">
+ <div class="panel">
+  <div class="handle"></div><h2 id="formTitle">Nuevo aviso</h2>
+  <div class="grid"><div><label>Fecha</label><input type="date" id="fecha"></div><div><label>Mostrar hasta</label><input type="date" id="hasta"></div></div>
+  <label>Título</label><input id="titulo" maxlength="100" placeholder="Título del aviso">
+  <label>Mensaje</label><textarea id="aviso" placeholder="Escribe el aviso…"></textarea>
+  <label>Icono</label><div class="icons" id="icons"></div>
+  <label>Tipo</label><select id="tipo"><option>GENERAL</option><option>IMPORTANTE</option><option>MISA</option><option>CATEQUESIS</option><option>HORA SANTA</option><option>EVENTO</option></select>
+  <div class="visible"><div><b>Mostrar aviso</b><div class="sub">Visible para las familias</div></div><input type="checkbox" id="mostrar" checked></div>
+  <button class="save" id="save" onclick="guardar()">PUBLICAR AVISO</button>
+  <button class="cancel" onclick="cerrar()">Cancelar</button>
+ </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* PEGA AQUÍ LA URL /exec DE TU IMPLEMENTACIÓN DE APPS SCRIPT */
+const API_URL = 'PEGA_AQUI_TU_URL_DE_APPS_SCRIPT_EXEC';
+
+const $=id=>document.getElementById(id);
+const iconos=['📢','🙏','⛪','📖','❤️','⭐'];
+let datos=[], editando=null, icono='📢';
+
+function hoy(){const d=new Date(),z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderIcons(){ $('icons').innerHTML=iconos.map(x=>`<button type="button" class="icon ${x===icono?'sel':''}" onclick="setIcon('${x}')">${x}</button>`).join('') }
+function setIcon(x){icono=x;renderIcons()}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2600)}
+
+async function apiGet(){
+ if(API_URL.includes('PEGA_AQUI')) throw new Error('Primero pega la URL de Apps Script en API_URL.');
+ const r=await fetch(API_URL+'?action=list',{cache:'no-store'}); return r.json()
+}
+async function apiPost(body){
+ const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+ return r.json()
+}
+async function cargar(){
+ $('list').className='loading';$('list').textContent='Cargando avisos…';
+ try{const r=await apiGet();if(!r.ok)throw new Error(r.error||'Error');datos=r.avisos||[];pintar()}
+ catch(e){$('list').className='empty';$('list').textContent=e.message}
+}
+function pintar(){
+ $('count').textContent=`${datos.length} ${datos.length===1?'aviso':'avisos'}`;
+ if(!datos.length){$('list').className='empty';$('list').textContent='Todavía no hay avisos.';return}
+ $('list').className='';
+ $('list').innerHTML=datos.map((a,i)=>`
+ <article class="card" style="${a.mostrar?'':'opacity:.58'}">
+  <div class="row"><div class="ico">${esc(a.icono)}</div><div class="grow">
+   <div class="title">${esc(a.titulo)}</div>
+   <div class="meta">${esc(a.fecha)}${a.hasta?' · hasta '+esc(a.hasta):''}</div>
+   <div class="badge">${a.mostrar?'VISIBLE':'OCULTO'} · ${esc(a.tipo)}</div>
+  </div></div>
+  <div class="body">${esc(a.aviso)}</div>
+  <div class="actions"><button onclick="editar(${i})">Editar</button><button onclick="toggle(${i})">${a.mostrar?'Ocultar':'Mostrar'}</button><button class="danger" onclick="borrar(${i})">Eliminar</button></div>
+ </article>`).join('')
+}
+function nuevo(){editando=null;icono='📢';$('formTitle').textContent='Nuevo aviso';$('fecha').value=hoy();$('hasta').value='';$('titulo').value='';$('aviso').value='';$('tipo').value='GENERAL';$('mostrar').checked=true;$('save').textContent='PUBLICAR AVISO';renderIcons();$('sheet').classList.add('open')}
+function editar(i){const a=datos[i];editando=a.fila;icono=a.icono||'📢';$('formTitle').textContent='Editar aviso';$('fecha').value=a.fecha||hoy();$('hasta').value=a.hasta||'';$('titulo').value=a.titulo;$('aviso').value=a.aviso;$('tipo').value=a.tipo||'GENERAL';$('mostrar').checked=!!a.mostrar;$('save').textContent='GUARDAR CAMBIOS';renderIcons();$('sheet').classList.add('open')}
+function cerrar(){$('sheet').classList.remove('open')}
+function fondoCerrar(e){if(e.target===$('sheet'))cerrar()}
+async function guardar(){
+ const payload={action:editando?'update':'create',fila:editando,fecha:$('fecha').value,hasta:$('hasta').value,titulo:$('titulo').value.trim(),aviso:$('aviso').value.trim(),icono,tipo:$('tipo').value,mostrar:$('mostrar').checked};
+ if(!payload.titulo||!payload.aviso||!payload.fecha){toast('Completa fecha, título y mensaje.');return}
+ $('save').disabled=true;$('save').textContent='GUARDANDO…';
+ try{const r=await apiPost(payload);if(!r.ok)throw new Error(r.error||'No se pudo guardar');datos=r.avisos||[];pintar();cerrar();toast(editando?'Aviso actualizado':'Aviso publicado')}
+ catch(e){toast(e.message)}
+ finally{$('save').disabled=false}
+}
+async function toggle(i){const a=datos[i];try{const r=await apiPost({action:'toggle',fila:a.fila,mostrar:!a.mostrar});if(!r.ok)throw new Error(r.error);datos=r.avisos||[];pintar()}catch(e){toast(e.message)}}
+async function borrar(i){const a=datos[i];if(!confirm(`¿Eliminar "${a.titulo}"?`))return;try{const r=await apiPost({action:'delete',fila:a.fila});if(!r.ok)throw new Error(r.error);datos=r.avisos||[];pintar();toast('Aviso eliminado')}catch(e){toast(e.message)}}
+renderIcons();cargar();
+</script>
+</body>
+</html>
